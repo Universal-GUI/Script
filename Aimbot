@@ -1,0 +1,236 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Settings = {
+    AimBotEnabled = false,
+    AimPart = "Torso",
+    FOVRadius = 100,
+    ShowFOV = true,
+    SmoothSpeed = 50,
+    ESPEnabled = true,
+    FOVColorSpeed = 1,
+    IsAimKeyPressed = false
+}
+
+local Window = Rayfield:CreateWindow({
+    Name = "Universal Aimbot",
+    LoadingTitle = "Aimbot Menu",
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = "AimbotSettings",
+       FileName = "aimbot_ui"
+    }
+})
+
+local MainTab = Window:CreateTab("Main", 4483362458)
+local ESPTab = Window:CreateTab("ESP", 4483362459)
+
+MainTab:CreateToggle({
+    Name = "Enable Aimbot",
+    CurrentValue = false,
+    Callback = function(Value)
+        Settings.AimBotEnabled = Value
+    end,
+})
+
+MainTab:CreateSlider({
+    Name = "Aimbot Smooth Speed",
+    Range = {1, 100},
+    Increment = 1,
+    CurrentValue = Settings.SmoothSpeed,
+    Callback = function(Value)
+        Settings.SmoothSpeed = Value
+    end,
+})
+
+MainTab:CreateSlider({
+    Name = "FOV Radius",
+    Range = {20, 300},
+    Increment = 5,
+    CurrentValue = 100,
+    Callback = function(Value)
+        Settings.FOVRadius = Value
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "Show FOV Circle",
+    CurrentValue = true,
+    Callback = function(Value)
+        Settings.ShowFOV = Value
+    end,
+})
+
+MainTab:CreateSlider({
+    Name = "Rainbow Speed (1-10)",
+    Range = {1, 10},
+    Increment = 1,
+    CurrentValue = Settings.FOVColorSpeed,
+    Callback = function(Value)
+        Settings.FOVColorSpeed = Value
+    end,
+})
+
+-- ESP UI
+ESPTab:CreateToggle({
+    Name = "Enable ESP",
+    CurrentValue = true,
+    Callback = function(Value)
+        Settings.ESPEnabled = Value
+    end,
+})
+
+-- FOV Circle
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.Filled = false
+FOVCircle.Transparency = 0.5
+
+local rainbowSpeed = 0
+local camera = workspace.CurrentCamera
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    local viewportSize = camera.ViewportSize
+    FOVCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+    FOVCircle.Radius = Settings.FOVRadius
+    FOVCircle.Visible = Settings.ShowFOV
+
+    rainbowSpeed = rainbowSpeed + (Settings.FOVColorSpeed * 0.01) / 2.5
+    local color = Color3.fromHSV(rainbowSpeed % 1, 1, 1)  -- Радужный эффект
+    FOVCircle.Color = color
+end)
+
+    local function createESP(player)
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    local color = player.Team and player.TeamColor.Color or Color3.fromRGB(255, 255, 255)
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "SimpleESP"
+    highlight.Adornee = character
+    highlight.FillColor = color
+    highlight.OutlineColor = Color3.new(1, 1, 1)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = character
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "SimpleESP"
+    billboard.Adornee = character:FindFirstChild("Head")
+    billboard.Size = UDim2.new(0, 100, 0, 20)
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.AlwaysOnTop = true
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Parent = billboard
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = color
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.TextScaled = true
+
+    billboard.Parent = character
+end
+
+local function removeESP(player)
+    if player.Character then
+        for _, v in ipairs(player.Character:GetChildren()) do
+            if v.Name == "SimpleESP" then
+                v:Destroy()
+            end
+        end
+    end
+end
+
+local function updateESP()
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            pcall(function()
+                removeESP(player)
+                if Settings.ESPEnabled then
+                    createESP(player)
+                end
+            end)
+        end
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    updateESP()
+end)
+
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = Settings.FOVRadius
+    local localPlayer = game.Players.LocalPlayer
+    local mouse = localPlayer:GetMouse()
+
+    for i, player in pairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local part
+            if player.Character:FindFirstChild("UpperTorso") and player.Character:FindFirstChild("LowerTorso") then
+                -- R15
+                if Settings.AimPart == "Torso" then
+                    part = player.Character.UpperTorso
+                end
+            elseif player.Character:FindFirstChild("Torso") then
+                -- R6
+                if Settings.AimPart == "Torso" then
+                    part = player.Character.Torso
+                end
+            end
+
+            if part then
+                local pos, visible = workspace.CurrentCamera:WorldToViewportPoint(part.Position)
+                if visible then
+                    local dist = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(pos.X, pos.Y)).Magnitude
+                    if dist < shortestDistance then
+                        shortestDistance = dist
+                        closestPlayer = part
+                    end
+                end
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+local function smoothAimToTarget(targetPosition)
+    local camera = workspace.CurrentCamera
+    local currentCFrame = camera.CFrame
+    local targetCFrame = CFrame.new(currentCFrame.Position, targetPosition)
+
+    local smoothSpeed = Settings.SmoothSpeed
+    local newCFrame = currentCFrame:Lerp(targetCFrame, smoothSpeed * game:GetService("RunService").Heartbeat:Wait())
+
+    camera.CFrame = newCFrame
+end
+
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        if Settings.AimBotEnabled then
+            Settings.IsAimKeyPressed = true
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        Settings.IsAimKeyPressed = false
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if Settings.AimBotEnabled and Settings.IsAimKeyPressed then
+        local target = getClosestPlayer()
+        if target then
+            smoothAimToTarget(target.Position)
+        end
+    end
+end)

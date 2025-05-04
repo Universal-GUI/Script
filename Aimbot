@@ -1,7 +1,5 @@
--- Загрузка UI-библиотеки (например, Rayfield)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Настройки
 local Settings = {
     AimBotEnabled = false,
     AimPart = "Torso",
@@ -11,10 +9,9 @@ local Settings = {
     ESPEnabled = true,
     FOVColorSpeed = 1,
     IsAimKeyPressed = false,
-    MaxAimDistance = 1500 -- максимум дистанции до цели
+    MaxAimDistance = 1500
 }
 
--- Создание окна
 local Window = Rayfield:CreateWindow({
     Name = "Universal Aimbot",
     LoadingTitle = "Aimbot Menu",
@@ -28,7 +25,6 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("Main", 4483362458)
 local ESPTab = Window:CreateTab("ESP", 4483362459)
 
--- Элементы UI
 MainTab:CreateToggle({
     Name = "Enable Aimbot",
     CurrentValue = false,
@@ -93,7 +89,6 @@ ESPTab:CreateToggle({
     end,
 })
 
--- FOV Circle
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 2
 FOVCircle.Filled = false
@@ -102,7 +97,6 @@ FOVCircle.Transparency = 0.5
 local rainbowSpeed = 0
 local camera = workspace.CurrentCamera
 
--- FOV визуализация
 game:GetService("RunService").RenderStepped:Connect(function()
     local viewportSize = camera.ViewportSize
     FOVCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
@@ -114,7 +108,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
     FOVCircle.Color = color
 end)
 
--- Создание ESP
 local function createESP(player)
     local character = player.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
@@ -165,7 +158,6 @@ local function updateESP()
     end
 end
 
--- Обновляем ESP не каждый кадр
 task.spawn(function()
     while true do
         updateESP()
@@ -173,7 +165,6 @@ task.spawn(function()
     end
 end)
 
--- Поиск ближайшего игрока
 local function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = Settings.FOVRadius
@@ -210,7 +201,6 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
--- Плавное наведение
 local function smoothAimToTarget(targetPosition)
     local camera = workspace.CurrentCamera
     local currentCFrame = camera.CFrame
@@ -220,7 +210,6 @@ local function smoothAimToTarget(targetPosition)
     camera.CFrame = newCFrame
 end
 
--- Проверка зажатия RMB
 local UserInputService = game:GetService("UserInputService")
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
@@ -237,13 +226,11 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Проверка наличия предмета в руках
 local function hasEquippedTool()
     local tool = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
     return tool ~= nil
 end
 
--- Aimbot loop
 game:GetService("RunService").RenderStepped:Connect(function()
     if Settings.AimBotEnabled and Settings.IsAimKeyPressed and hasEquippedTool() then
         local target = getClosestPlayer()

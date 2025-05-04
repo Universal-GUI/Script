@@ -1,5 +1,7 @@
+-- Загрузка UI-библиотеки (например, Rayfield)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- Настройки
 local Settings = {
     AimBotEnabled = false,
     AimPart = "Torso",
@@ -8,9 +10,11 @@ local Settings = {
     SmoothSpeed = 50,
     ESPEnabled = true,
     FOVColorSpeed = 1,
-    IsAimKeyPressed = false
+    IsAimKeyPressed = false,
+    MaxAimDistance = 1500 -- максимум дистанции до цели
 }
 
+-- Создание окна
 local Window = Rayfield:CreateWindow({
     Name = "Universal Aimbot",
     LoadingTitle = "Aimbot Menu",
@@ -24,6 +28,7 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("Main", 4483362458)
 local ESPTab = Window:CreateTab("ESP", 4483362459)
 
+-- Элементы UI
 MainTab:CreateToggle({
     Name = "Enable Aimbot",
     CurrentValue = false,
@@ -70,7 +75,16 @@ MainTab:CreateSlider({
     end,
 })
 
--- ESP UI
+MainTab:CreateSlider({
+    Name = "Max Aim Distance",
+    Range = {100, 5000},
+    Increment = 100,
+    CurrentValue = Settings.MaxAimDistance,
+    Callback = function(Value)
+        Settings.MaxAimDistance = Value
+    end,
+})
+
 ESPTab:CreateToggle({
     Name = "Enable ESP",
     CurrentValue = true,
@@ -88,6 +102,7 @@ FOVCircle.Transparency = 0.5
 local rainbowSpeed = 0
 local camera = workspace.CurrentCamera
 
+-- FOV визуализация
 game:GetService("RunService").RenderStepped:Connect(function()
     local viewportSize = camera.ViewportSize
     FOVCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
@@ -95,25 +110,17 @@ game:GetService("RunService").RenderStepped:Connect(function()
     FOVCircle.Visible = Settings.ShowFOV
 
     rainbowSpeed = rainbowSpeed + (Settings.FOVColorSpeed * 0.01) / 2.5
-    local color = Color3.fromHSV(rainbowSpeed % 1, 1, 1)  -- Радужный эффект
+    local color = Color3.fromHSV(rainbowSpeed % 1, 1, 1)
     FOVCircle.Color = color
 end)
 
-    local function createESP(player)
+-- Создание ESP
+local function createESP(player)
     local character = player.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    if character:FindFirstChild("SimpleESP") then return end
 
-    local color = player.Team and player.TeamColor.Color or Color3.fromRGB(255, 255, 255)
-
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "SimpleESP"
-    highlight.Adornee = character
-    highlight.FillColor = color
-    highlight.OutlineColor = Color3.new(1, 1, 1)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = character
+    local color = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255, 255, 255)
 
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "SimpleESP"
@@ -158,10 +165,15 @@ local function updateESP()
     end
 end
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    updateESP()
+-- Обновляем ESP не каждый кадр
+task.spawn(function()
+    while true do
+        updateESP()
+        task.wait(0.5)
+    end
 end)
 
+-- Поиск ближайшего игрока
 local function getClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = Settings.FOVRadius
@@ -172,12 +184,10 @@ local function getClosestPlayer()
         if player ~= localPlayer and player.Character then
             local part
             if player.Character:FindFirstChild("UpperTorso") and player.Character:FindFirstChild("LowerTorso") then
-                -- R15
                 if Settings.AimPart == "Torso" then
                     part = player.Character.UpperTorso
                 end
             elseif player.Character:FindFirstChild("Torso") then
-                -- R6
                 if Settings.AimPart == "Torso" then
                     part = player.Character.Torso
                 end
@@ -185,7 +195,8 @@ local function getClosestPlayer()
 
             if part then
                 local pos, visible = workspace.CurrentCamera:WorldToViewportPoint(part.Position)
-                if visible then
+                local distanceToLocalPlayer = (part.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
+                if visible and distanceToLocalPlayer <= Settings.MaxAimDistance then
                     local dist = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(pos.X, pos.Y)).Magnitude
                     if dist < shortestDistance then
                         shortestDistance = dist
@@ -199,17 +210,17 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
+-- Плавное наведение
 local function smoothAimToTarget(targetPosition)
     local camera = workspace.CurrentCamera
     local currentCFrame = camera.CFrame
     local targetCFrame = CFrame.new(currentCFrame.Position, targetPosition)
-
-    local smoothSpeed = Settings.SmoothSpeed
-    local newCFrame = currentCFrame:Lerp(targetCFrame, smoothSpeed * game:GetService("RunService").Heartbeat:Wait())
-
+    local delta = game:GetService("RunService").Heartbeat:Wait()
+    local newCFrame = currentCFrame:Lerp(targetCFrame, math.clamp(Settings.SmoothSpeed * delta, 0, 1))
     camera.CFrame = newCFrame
 end
 
+-- Проверка зажатия RMB
 local UserInputService = game:GetService("UserInputService")
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
@@ -226,8 +237,15 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
+-- Проверка наличия предмета в руках
+local function hasEquippedTool()
+    local tool = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    return tool ~= nil
+end
+
+-- Aimbot loop
 game:GetService("RunService").RenderStepped:Connect(function()
-    if Settings.AimBotEnabled and Settings.IsAimKeyPressed then
+    if Settings.AimBotEnabled and Settings.IsAimKeyPressed and hasEquippedTool() then
         local target = getClosestPlayer()
         if target then
             smoothAimToTarget(target.Position)

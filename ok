@@ -185,50 +185,50 @@ game:GetService("ReplicatedStorage").Remotes.ChapterEvent:FireServer("_VGC", tos
 end)
 addButton(cont2, "Get Key - Hospital", "Gets Key and Escapes with him", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Plank", true).CFrame
-wait(0.2)
+wait(1)
 fireclickdetector(game.Workspace:FindFirstChild("Plank", true):FindFirstChildOfClass("ClickDetector"))
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("Plank").Parent = game.Players.LocalPlayer.Character
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(29, 4, -274)
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Hammer", true).CFrame
-wait(0.2)
+wait(1)
 fireclickdetector(game.Workspace:FindFirstChild("Hammer", true):FindFirstChildOfClass("ClickDetector"))
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("Hammer").Parent = game.Players.LocalPlayer.Character
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12, 15, -277)
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("WhiteKey", true).CFrame
-wait(0.2)
+wait(1)
 fireclickdetector(game.Workspace:FindFirstChild("WhiteKey", true):FindFirstChildOfClass("ClickDetector"))
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("WhiteKey").Parent = game.Players.LocalPlayer.Character
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12, 15, -277)
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.LoadedMap.Part1.Table.Table.Union.CFrame
-wait(0.2)
+wait(1)
 
 fireproximityprompt(workspace.LoadedMap.Part1.Table.Drawer.MainPart.Attachment.ProximityPrompt)
-wait(0.2)
+wait(1)
 local args = {
 	"0524"
 }
 workspace:WaitForChild("LoadedMap"):WaitForChild("Part1"):WaitForChild("Table"):WaitForChild("InputCode"):InvokeServer(unpack(args))
 wait(1)
 fireproximityprompt(workspace.LoadedMap.Part1.Table.HeartKeyTrigger.ProximityPrompt)
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-9, 15, -280)
 end)
 addButton(cont2, "Redeem Code - Carnival", "Redeems APPLEPIE code", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-460, 80, 302)
-wait(0.2)
+wait(1)
 fireclickdetector(workspace.LoadedMap.Part1.Lock.ClickDetector)
-wait(0.2)
+wait(1)
 fireproximityprompt(workspace.LoadedMap.Part1:GetChildren()[338].PowerPanel.Panel.Attachment.ProximityPrompt)
-wait(0.2)
+wait(1)
 
 local input = game:GetService("Players").LocalPlayer.PlayerGui:WaitForChild("QuestLetterInputUI").MainFrame.InputFrame
 local word = "APPLEPIE"

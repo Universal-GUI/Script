@@ -372,7 +372,7 @@ for i = 1,10 do
 end
 end)
 addButton(cont3, "Complete Gallery part", "Collects all hidden items", nil, function()
-game.Players.LocalPlayer.Character:MoveTo(game.Workspace:FindFirstChild("Hammer",true).Position)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Hammer", true).CFrame
 wait(1)
 fireclickdetector(game.Workspace:FindFirstChild("Hammer", true):FindFirstChildOfClass("ClickDetector"))
 wait(1)

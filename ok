@@ -355,17 +355,17 @@ end)
 end)
 addButton(cont2, "Deliver Potato Plush", "Gets and delivers Potato Plush", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("WaterGun", true).CFrame
-wait(0.2)
+wait(1)
 fireclickdetector(game.Workspace:FindFirstChild("WaterGun", true):FindFirstChildOfClass("ClickDetector"))
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("WaterGun").Parent = game.Players.LocalPlayer.Character
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-515, 75, 324)
 wait(1)
 fireclickdetector(game.Workspace:FindFirstChild("PotatoPlush", true):FindFirstChildOfClass("ClickDetector"))
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("PotatoPlush").Parent = game.Players.LocalPlayer.Character
-wait(0.2)
+wait(1)
 for i = 1,10 do
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.LoadedMap.Part2:GetChildren()[7].UpperTorso:GetPivot() * CFrame.new(0, 0, 2)
     wait(0.03)
@@ -373,9 +373,9 @@ end
 end)
 addButton(cont3, "Complete Gallery part", "Collects all hidden items", nil, function()
 game.Players.LocalPlayer.Character:MoveTo(game.Workspace:FindFirstChild("Hammer",true).Position)
-wait(0.2)
+wait(1)
 fireclickdetector(game.Workspace:FindFirstChild("Hammer", true):FindFirstChildOfClass("ClickDetector"))
-wait(0.2)
+wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("Hammer").Parent = game.Players.LocalPlayer.Character
 for _, m in pairs(workspace:GetDescendants()) do
     local p = m:GetChildren()

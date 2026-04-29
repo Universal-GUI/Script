@@ -1,0 +1,505 @@
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
+
+-- [ УДАЛЕНИЕ СТАРОЙ ВЕРСИИ ]
+if pGui:FindFirstChild("QuestHubSystem") then pGui.QuestHubSystem:Destroy() end
+
+-- [ НАСТРОЙКИ ГРАФИКИ И ЦВЕТОВ ]
+local COLORS = {
+    MainBG = Color3.fromRGB(15, 15, 18),
+    Text = Color3.fromRGB(255, 255, 255),
+    HintText = Color3.fromRGB(160, 160, 160),
+    InactiveText = Color3.fromRGB(120, 120, 120),
+    ButtonBG = Color3.fromRGB(255, 255, 255),
+    Transparency = 0.15
+}
+
+-- [ СОЗДАНИЕ КОНТЕЙНЕРА ]
+local screen = Instance.new("ScreenGui", pGui)
+screen.Name = "QuestHubSystem"
+screen.ResetOnSpawn = false -- Не пропадает при смерти
+
+local function makeDraggable(frame)
+    local UserInputService = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
+
+    local dragging = false
+    local dragStart, startPos
+    local targetPos = frame.Position -- Целевая позиция, к которой будем стремиться
+    local dragSpeed = 0.2 -- Скорость доводки (от 0.1 до 1). Чем меньше, тем плавнее.
+
+    -- Когда нажали на фрейм
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            
+            -- Отключаем перетаскивание при отпускании
+            local connection
+            connection = UserInputService.InputEnded:Connect(function(inputEnded)
+                if inputEnded == input or inputEnded.UserInputType == Enum.UserInputType.MouseButton1 or inputEnded.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                    connection:Disconnect()
+                end
+            end)
+        end
+    end)
+
+    -- Обновляем целевую позицию при движении
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            targetPos = UDim2.new(
+                startPos.X.Scale, 
+                startPos.X.Offset + delta.X, 
+                startPos.Y.Scale, 
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    -- Каждый кадр плавно двигаем рамку к цели
+    RunService.RenderStepped:Connect(function()
+        if frame.Position ~= targetPos then
+            -- Метод Lerp делает переход между текущей позицией и целью мягким
+            frame.Position = frame.Position:Lerp(targetPos, dragSpeed)
+        end
+    end)
+end
+
+-- [ ФУНКЦИЯ СОЗДАНИЯ КНОПКИ С ПОДСКАЗКОЙ ]
+local function addButton(parent, text, hint, color, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, -5, 0, 45)
+    btn.BackgroundColor3 = color or COLORS.ButtonBG
+    btn.BackgroundTransparency = color and 0.85 or 0.95
+    btn.Text = ""
+    btn.AutoButtonColor = true
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    
+    local titleLabel = Instance.new("TextLabel", btn)
+    titleLabel.Size = UDim2.new(1, 0, 0, 25)
+    titleLabel.Position = UDim2.new(0, 0, 0, 4)
+    titleLabel.BackgroundTransparency, titleLabel.Text, titleLabel.TextColor3 = 1, text:upper(), COLORS.Text
+    titleLabel.Font, titleLabel.TextSize = Enum.Font.GothamBold, 11
+
+    local hintLabel = Instance.new("TextLabel", btn)
+    hintLabel.Size = UDim2.new(1, 0, 0, 15)
+    hintLabel.Position = UDim2.new(0, 0, 0, 24)
+    hintLabel.BackgroundTransparency, hintLabel.Text, hintLabel.TextColor3 = 1, hint, COLORS.HintText
+    hintLabel.Font, hintLabel.TextSize = Enum.Font.GothamMedium, 9
+    
+    btn.MouseButton1Click:Connect(callback)
+    btn.MouseEnter:Connect(function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.8}):Play() end)
+    btn.MouseLeave:Connect(function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = color and 0.85 or 0.95}):Play() end)
+    -- Вставь это в конец функции addButton:
+    parent.CanvasSize = UDim2.new(0, 0, 0, parent.UIListLayout.AbsoluteContentSize.Y + 10)
+end
+
+-- [ ФУНКЦИЯ СОЗДАНИЯ ОКНА ]
+local function createStyledFrame(size, pos, titleText)
+    local frame = Instance.new("Frame", screen)
+    frame.Size, frame.Position = size, pos
+    frame.BackgroundColor3, frame.BackgroundTransparency = COLORS.MainBG, COLORS.Transparency
+    frame.BorderSizePixel = 0
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+    makeDraggable(frame)
+    local title = Instance.new("TextLabel", frame)
+    title.Size, title.BackgroundTransparency = UDim2.new(1, 0, 0, 40), 1
+    title.Text, title.TextColor3 = titleText:upper(), COLORS.Text
+    title.Font, title.TextSize = Enum.Font.GothamBold, 12
+    return frame
+end
+
+-- [ ГЛАВНОЕ ОКНО ]
+local mainFrame = createStyledFrame(UDim2.new(0, 350, 0, 250), UDim2.new(0.5, -175, 0.5, -125), "The 3 Veggiteers")
+local sideBar = Instance.new("Frame", mainFrame)
+sideBar.Size, sideBar.Position, sideBar.BackgroundTransparency = UDim2.new(0, 90, 1, -20), UDim2.new(0, 10, 0, 10), 1
+Instance.new("UIListLayout", sideBar).Padding = UDim.new(0, 8)
+
+-- [ СОЗДАНИЕ КНОПКИ ПЕРЕКЛЮЧЕНИЯ ]
+local toggleBtn = Instance.new("TextButton", screen)
+toggleBtn.Name = "MenuToggle"
+toggleBtn.Size = UDim2.new(0, 50, 0, 50)
+toggleBtn.Position = UDim2.new(0, 700, 0.5, -25)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+toggleBtn.BackgroundTransparency = 0.2
+toggleBtn.Text = "MENU"
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 10
+toggleBtn.ZIndex = 10
+
+local btnCorner = Instance.new("UICorner", toggleBtn)
+btnCorner.CornerRadius = UDim.new(0, 12)
+
+-- ДОБАВЛЯЕМ ОБВОДКУ
+local stroke = Instance.new("UIStroke", toggleBtn)
+stroke.Thickness = 2 -- Толщина линии
+stroke.Color = Color3.fromRGB(255, 255, 255) -- Цвет обводки (белый)
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- Обводка по краям
+stroke.Transparency = 0.2 -- Сделаем её чуть полупрозрачной для стиля
+
+makeDraggable(toggleBtn)
+
+-- ЛОГИКА СКРЫТИЯ (С СОХРАНЕНИЕМ ПРОЗРАЧНОСТИ)
+local menuVisible = true
+local originalTrans = {} -- Таблица для хранения "родной" прозрачности
+
+toggleBtn.MouseButton1Click:Connect(function()
+    menuVisible = not menuVisible
+    
+    -- 1. Анимация главной рамки
+    TweenService:Create(mainFrame, TweenInfo.new(0.3), {
+        BackgroundTransparency = menuVisible and 0.15 or 1
+    }):Play()
+    
+    -- 2. Анимация всех внутренних элементов
+    for _, child in pairs(mainFrame:GetDescendants()) do
+        -- Работаем с фоном (Frame, Button) и текстом (Label, Button)
+        local isGui = child:IsA("GuiObject")
+        local isText = child:IsA("TextLabel") or child:IsA("TextButton")
+        
+        if isGui then
+            -- Если мы еще не запомнили прозрачность этого объекта — запоминаем её
+            if originalTrans[child] == nil then
+                originalTrans[child] = {
+                    bg = child.BackgroundTransparency,
+                    txt = isText and child.TextTransparency or 0
+                }
+            end
+            
+            -- Возвращаем к оригиналу или уводим в 1
+            local targetBg = menuVisible and originalTrans[child].bg or 1
+            TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = targetBg}):Play()
+            
+            if isText then
+                local targetTxt = menuVisible and originalTrans[child].txt or 1
+                TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = targetTxt}):Play()
+            end
+        end
+    end
+
+    if menuVisible then mainFrame.Visible = true end
+    task.delay(0.3, function()
+        if not menuVisible then mainFrame.Visible = false end
+    end)
+end)
+
+local container = Instance.new("Frame", mainFrame)
+container.Size, container.Position, container.BackgroundTransparency = UDim2.new(1, -120, 1, -20), UDim2.new(0, 110, 0, 10), 1
+
+-- [ СИСТЕМА ТАБОВ ]
+local pages = {}
+local function createTab(name, isDefault)
+    local tabBtn = Instance.new("TextButton", sideBar)
+    tabBtn.Size = UDim2.new(1, 0, 0, 35)
+    tabBtn.Text = name:upper()
+    tabBtn.BackgroundColor3, tabBtn.BackgroundTransparency = COLORS.ButtonBG, isDefault and 0.9 or 0.98
+    tabBtn.TextColor3 = isDefault and COLORS.Text or COLORS.InactiveText
+    tabBtn.Font, tabBtn.TextSize = Enum.Font.GothamBold, 10
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 8)
+
+    local page = Instance.new("ScrollingFrame", container)
+    page.Size, page.Position, page.BackgroundTransparency, page.Visible = UDim2.new(1, 0, 1, -10), UDim2.new(0,0,0,35), 1, isDefault
+    page.ScrollBarThickness = 0
+    Instance.new("UIListLayout", page).Padding = UDim.new(0, 10)
+    
+    pages[name] = {btn = tabBtn, page = page}
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, data in pairs(pages) do
+            data.page.Visible = false
+            TweenService:Create(data.btn, TweenInfo.new(0.3), {BackgroundTransparency = 0.98, TextColor3 = COLORS.InactiveText}):Play()
+        end
+        page.Visible = true
+        TweenService:Create(tabBtn, TweenInfo.new(0.3), {BackgroundTransparency = 0.9, TextColor3 = COLORS.Text}):Play()
+    end)
+    return page
+end
+
+-- [ СОЗДАНИЕ ПОД-ОКОН ]
+local function createSubWindow(title)
+    local win = createStyledFrame(UDim2.new(0, 220, 0, 180), UDim2.new(0.5, 200, 0.5, -90), title)
+    win.Visible = false
+    local close = Instance.new("TextButton", win)
+    -- Увеличиваем Size (было 20х20, стало 30х30)
+    close.Size = UDim2.new(0, 30, 0, 30) 
+    -- Сдвигаем чуть левее, чтобы не вылезала за края (было -25, стало -35)
+    close.Position = UDim2.new(1, -35, 0, 5)
+    close.Text = "x"
+    close.TextColor3 = Color3.new(1, 0, 0)
+    close.BackgroundTransparency = 1
+    close.Font = Enum.Font.GothamBold
+    -- Увеличиваем TextSize (было 12-14, стало 22)
+    close.TextSize = 15 
+    
+    close.MouseButton1Click:Connect(function() win.Visible = false end)
+    local content = Instance.new("ScrollingFrame", win)
+    content.Size, content.Position, content.BackgroundTransparency = UDim2.new(1, -20, 1, -50), UDim2.new(0, 10, 0, 40), 1
+    content.ScrollBarThickness = 0
+    Instance.new("UIListLayout", content).Padding = UDim.new(0, 10)
+    return win, content
+end
+
+-- [ ИНИЦИАЛИЗАЦИЯ СОДЕРЖИМОГО ]
+local TabMain = createTab("Main", true)
+local TabSettings = createTab("Settings", false)
+local TabCredits = createTab("Credits", false)
+
+local win1, cont1 = createSubWindow("Chloe - carrot")
+local win2, cont2 = createSubWindow("Olivia - onion")
+local win3, cont3 = createSubWindow("Brooke - reddish")
+
+-- [ КНОПКИ В ВКЛАДКЕ MAIN ]
+addButton(TabMain, "Chloe - carrot", "Map - School, Gamemode - Tag", Color3.fromRGB(255, 117, 24), function() win1.Visible = not win1.Visible end)
+addButton(TabMain, "Olivia - onion", "Map - Hospital, Carnival; Gamemode - Any ,Traitor", Color3.fromRGB(240, 230, 210), function() win2.Visible = not win2.Visible end)
+addButton(TabMain, "Brooke - reddish", "Map - Gallery, Gamemode - Swarm", Color3.fromRGB(227, 38, 75), function() win3.Visible = not win3.Visible end)
+
+-- [ КНОПКИ ВНУТРИ ПОД-ОКОН ]
+addButton(cont1, "Redeem Code", "Won't work if you are not player", nil, function()
+fireclickdetector(workspace.LoadedMap.Part1.Lock.ClickDetector)
+wait(0.1)
+local s = 0
+for _, b in pairs(workspace:GetDescendants()) do
+    if b.Name == "Board" then
+        for _, l in pairs(b:GetDescendants()) do
+            if l:IsA("TextLabel") then s = s + (tonumber(l.Text) or 0) end
+        end
+    end
+end
+game:GetService("ReplicatedStorage").Remotes.ChapterEvent:FireServer("_VGC", tostring(s))
+end)
+addButton(cont2, "Get Key - Hospital", "Gets Key and Escapes with him", nil, function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Plank", true).CFrame
+wait(0.25)
+fireclickdetector(game.Workspace:FindFirstChild("Plank", true):FindFirstChildOfClass("ClickDetector"))
+wait(1)
+game.Players.LocalPlayer.Backpack:FindFirstChild("Plank").Parent = game.Players.LocalPlayer.Character
+wait(1)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(29, 4, -274)
+wait(0.5)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Hammer", true).CFrame
+wait(0.25)
+fireclickdetector(game.Workspace:FindFirstChild("Hammer", true):FindFirstChildOfClass("ClickDetector"))
+wait(1)
+game.Players.LocalPlayer.Backpack:FindFirstChild("Hammer").Parent = game.Players.LocalPlayer.Character
+wait(1)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12, 15, -277)
+wait(0.5)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("WhiteKey", true).CFrame
+wait(0.25)
+fireclickdetector(game.Workspace:FindFirstChild("WhiteKey", true):FindFirstChildOfClass("ClickDetector"))
+wait(1)
+game.Players.LocalPlayer.Backpack:FindFirstChild("WhiteKey").Parent = game.Players.LocalPlayer.Character
+wait(1)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12, 15, -277)
+wait(0.5)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.LoadedMap.Part1.Table.Table.Union.CFrame
+wait(0.25)
+
+fireproximityprompt(workspace.LoadedMap.Part1.Table.Drawer.MainPart.Attachment.ProximityPrompt)
+wait(1)
+local args = {
+	"0524"
+}
+workspace:WaitForChild("LoadedMap"):WaitForChild("Part1"):WaitForChild("Table"):WaitForChild("InputCode"):InvokeServer(unpack(args))
+wait(1)
+fireproximityprompt(workspace.LoadedMap.Part1.Table.HeartKeyTrigger.ProximityPrompt)
+wait(1)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-9, 15, -280)
+end)
+addButton(cont2, "Redeem Code - Carnival", "Redeems APPLEPIE code", nil, function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-460, 80, 302)
+wait(0.25)
+fireclickdetector(workspace.LoadedMap.Part1.Lock.ClickDetector)
+wait(1)
+fireproximityprompt(workspace.LoadedMap.Part1:GetChildren()[338].PowerPanel.Panel.Attachment.ProximityPrompt)
+wait(1)
+
+local input = game:GetService("Players").LocalPlayer.PlayerGui:WaitForChild("QuestLetterInputUI").MainFrame.InputFrame
+local word = "APPLEPIE"
+
+local function click(btn)
+    for _, ev in {"MouseButton1Click", "MouseButton1Down", "Activated"} do
+        for _, c in getconnections(btn[ev]) do c:Fire() end
+    end
+end
+
+local slots = {}
+for _, v in input:GetChildren() do
+    if v:IsA("Frame") and v:FindFirstChild("UpButton") then table.insert(slots, v) end
+end
+table.sort(slots, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
+
+for i = 1, #word do
+    local char = word:sub(i, i)
+    local slot = slots[i]
+    if slot then
+        while slot.CurrentText.Text ~= char do
+            click(slot.UpButton)
+            task.wait()
+        end
+    end
+end
+
+local enter = input.Parent:FindFirstChild("EnterButton")
+if enter then task.wait() click(enter) end
+end)
+addButton(cont2, "Auto Memory Match - Carnival", "Close Memory Match menu for work", nil, function()
+fireproximityprompt(workspace.LoadedMap.Part1:GetChildren()[338].PowerPanel.Panel.Attachment.ProximityPrompt)
+wait(0.25)
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+task.spawn(function()
+    local questGui = playerGui:WaitForChild("QuestMemoryInputUI", 10)
+    local inputFrame = questGui and questGui:FindFirstChild("InputFrame", true)
+
+    if not inputFrame then return end
+
+    local sequence = {}
+    local lastChangeTime = 0
+    local originalColors = {}
+    local isBotActing = false
+    
+    local changedInWindow = {}
+    local waitingForWindow = false
+
+    for _, btn in pairs(inputFrame:GetChildren()) do
+        if btn:IsA("GuiObject") then
+            originalColors[btn] = btn.BackgroundColor3
+        end
+    end
+
+    local function clickButton(btn)
+        local x = btn.AbsolutePosition.X + (btn.AbsoluteSize.X / 1.1)
+        local y = btn.AbsolutePosition.Y + (btn.AbsoluteSize.Y / 2) + 58 
+        VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 1)
+        task.wait(0.05)
+        VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 1)
+    end
+
+    local function handleWindowedChanges()
+        waitingForWindow = true
+        task.wait(0.05) 
+        
+        local count = 0
+        local tempBtns = {}
+        for btn, _ in pairs(changedInWindow) do
+            count = count + 1
+            table.insert(tempBtns, btn)
+        end
+
+        if count > 0 and count < 5 then
+            for _, btn in ipairs(tempBtns) do
+                table.insert(sequence, btn)
+                lastChangeTime = tick()
+            end
+        end
+
+        changedInWindow = {}
+        waitingForWindow = false
+    end
+
+    local function playSequence()
+        if #sequence == 0 or isBotActing then return end
+        isBotActing = true
+        
+        task.wait(0.8)
+
+        for _, btn in ipairs(sequence) do
+            clickButton(btn)
+            task.wait(0.4)
+        end
+
+        sequence = {}
+        task.wait(1) 
+        isBotActing = false
+    end
+
+    for _, btn in pairs(inputFrame:GetChildren()) do
+        if btn:IsA("GuiObject") then
+            btn:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
+                if not isBotActing and btn.BackgroundColor3 ~= originalColors[btn] then
+                    changedInWindow[btn] = true
+                    if not waitingForWindow then
+                        task.spawn(handleWindowedChanges)
+                    end
+                end
+            end)
+        end
+    end
+
+    while true do
+        task.wait(0.2)
+        if #sequence > 0 and (tick() - lastChangeTime) > 1.5 and not isBotActing then
+            playSequence()
+        end
+    end
+end)
+end)
+addButton(cont2, "Deliver Potato Plush - Carnival", "Gets and delivers Potato Plush", nil, function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("WaterGun", true).CFrame
+wait(0.25)
+fireclickdetector(game.Workspace:FindFirstChild("WaterGun", true):FindFirstChildOfClass("ClickDetector"))
+wait(1)
+game.Players.LocalPlayer.Backpack:FindFirstChild("WaterGun").Parent = game.Players.LocalPlayer.Character
+wait(1)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-515, 75, 324)
+wait(0.5)
+fireclickdetector(game.Workspace:FindFirstChild("PotatoPlush", true):FindFirstChildOfClass("ClickDetector"))
+wait(1)
+game.Players.LocalPlayer.Backpack:FindFirstChild("PotatoPlush").Parent = game.Players.LocalPlayer.Character
+wait(1)
+for i = 1,10 do
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.LoadedMap.Part2:GetChildren()[7].UpperTorso:GetPivot() * CFrame.new(0, 0, 2)
+    wait(0.03)
+end
+end)
+addButton(cont3, "Get Hammer", "Gets and Equips Hammer", nil, function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Hammer", true).CFrame
+wait(0.25)
+fireclickdetector(game.Workspace:FindFirstChild("Hammer", true):FindFirstChildOfClass("ClickDetector"))
+wait(1)
+game.Players.LocalPlayer.Backpack:FindFirstChild("Hammer").Parent = game.Players.LocalPlayer.Character
+end)
+addButton(cont3, "Break all Paintings", "Hammer need to be Equipped", nil, function()
+for _, m in pairs(workspace:GetDescendants()) do
+    local p = m:GetChildren()
+    local c = false
+    for _, v in pairs(p) do 
+        if v:IsA("BasePart") and v.Color == Color3.fromRGB(108, 88, 75) then c = true end 
+    end
+    if #p == 9 and c then
+        local targetCF = m:GetPivot() * CFrame.new(-1, 0, 2) 
+        game.Players.LocalPlayer.Character:PivotTo(targetCF)
+        task.wait(0.3)
+    end
+end
+end)
+addButton(cont3, "Collect Hidden items", "Collects Hidden items", nil, function()
+for _, v in pairs(workspace:GetDescendants()) do
+    if v.Name == "Remote" or v.Name == "Battery" then
+        local cd = v:FindFirstChildOfClass("ClickDetector") or v:FindFirstChildWhichIsA("ClickDetector", true)
+        if cd then
+            game.Players.LocalPlayer.Character:PivotTo(v:GetPivot())
+            task.wait(0.2)
+            fireclickdetector(cd)
+            task.wait(0.5)
+        end
+    end
+end
+end)
+
+-- [ НАСТРОЙКИ ]
+addButton(TabSettings, "Destroy UI", "Fully deletes UI", Color3.fromRGB(150, 50, 50), function() screen:Destroy() end)
+
+-- [ КРЕДИТЫ ]
+addButton(TabCredits, "Totallynothimplayz", "yes", nil, function() end)
+addButton(TabCredits, "Sh@d0w", "Sigma op script", nil, function() end)
+addButton(TabCredits, "Version 6.7", "Cool", nil, function() end)

@@ -118,7 +118,7 @@ btnCorner.CornerRadius = UDim.new(0, 12)
 
 -- ДОБАВЛЯЕМ ОБВОДКУ
 local stroke = Instance.new("UIStroke", toggleBtn)
-stroke.Thickness = 2 -- Толщина линии
+stroke.Thickness = 1 -- Толщина линии
 stroke.Color = Color3.fromRGB(255, 255, 255) -- Цвет обводки (белый)
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- Обводка по краям
 stroke.Transparency = 0.2 -- Сделаем её чуть полупрозрачной для стиля

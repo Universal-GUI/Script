@@ -259,7 +259,7 @@ end
 local enter = input.Parent:FindFirstChild("EnterButton")
 if enter then task.wait() click(enter) end
 end)
-addButton(cont2, "Auto Memory Match", "Close Memory Match menu for work", nil, function()
+addButton(cont2, "Auto Memory Match - Carnival", "Close Memory Match menu for work", nil, function()
 fireproximityprompt(workspace.LoadedMap.Part1:GetChildren()[338].PowerPanel.Panel.Attachment.ProximityPrompt)
 wait(0.25)
 local Players = game:GetService("Players")
@@ -353,7 +353,7 @@ task.spawn(function()
     end
 end)
 end)
-addButton(cont2, "Deliver Potato Plush", "Gets and delivers Potato Plush", nil, function()
+addButton(cont2, "Deliver Potato Plush - Carnival", "Gets and delivers Potato Plush", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("WaterGun", true).CFrame
 wait(0.25)
 fireclickdetector(game.Workspace:FindFirstChild("WaterGun", true):FindFirstChildOfClass("ClickDetector"))

@@ -104,7 +104,7 @@ Instance.new("UIListLayout", sideBar).Padding = UDim.new(0, 8)
 local toggleBtn = Instance.new("TextButton", screen)
 toggleBtn.Name = "MenuToggle"
 toggleBtn.Size = UDim2.new(0, 50, 0, 50)
-toggleBtn.Position = UDim2.new(0, 700, 0.5, -25)
+toggleBtn.Position = UDim2.new(0, 20, 0.5, -25)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 toggleBtn.BackgroundTransparency = 0.2
 toggleBtn.Text = "MENU"
@@ -115,6 +115,13 @@ toggleBtn.ZIndex = 10
 
 local btnCorner = Instance.new("UICorner", toggleBtn)
 btnCorner.CornerRadius = UDim.new(0, 12)
+
+-- ДОБАВЛЯЕМ ОБВОДКУ
+local stroke = Instance.new("UIStroke", toggleBtn)
+stroke.Thickness = 2 -- Толщина линии
+stroke.Color = Color3.fromRGB(255, 255, 255) -- Цвет обводки (белый)
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- Обводка по краям
+stroke.Transparency = 0.2 -- Сделаем её чуть полупрозрачной для стиля
 
 makeDraggable(toggleBtn)
 

@@ -100,6 +100,68 @@ local sideBar = Instance.new("Frame", mainFrame)
 sideBar.Size, sideBar.Position, sideBar.BackgroundTransparency = UDim2.new(0, 90, 1, -20), UDim2.new(0, 10, 0, 10), 1
 Instance.new("UIListLayout", sideBar).Padding = UDim.new(0, 8)
 
+-- [ СОЗДАНИЕ КНОПКИ ПЕРЕКЛЮЧЕНИЯ ]
+local toggleBtn = Instance.new("TextButton", screen)
+toggleBtn.Name = "MenuToggle"
+toggleBtn.Size = UDim2.new(0, 50, 0, 50)
+toggleBtn.Position = UDim2.new(0, 20, 0.5, -25)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+toggleBtn.BackgroundTransparency = 0.2
+toggleBtn.Text = "MENU"
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 10
+toggleBtn.ZIndex = 10
+
+local btnCorner = Instance.new("UICorner", toggleBtn)
+btnCorner.CornerRadius = UDim.new(0, 12)
+
+makeDraggable(toggleBtn)
+
+-- ЛОГИКА СКРЫТИЯ (С СОХРАНЕНИЕМ ПРОЗРАЧНОСТИ)
+local menuVisible = true
+local originalTrans = {} -- Таблица для хранения "родной" прозрачности
+
+toggleBtn.MouseButton1Click:Connect(function()
+    menuVisible = not menuVisible
+    
+    -- 1. Анимация главной рамки
+    TweenService:Create(mainFrame, TweenInfo.new(0.3), {
+        BackgroundTransparency = menuVisible and 0.15 or 1
+    }):Play()
+    
+    -- 2. Анимация всех внутренних элементов
+    for _, child in pairs(mainFrame:GetDescendants()) do
+        -- Работаем с фоном (Frame, Button) и текстом (Label, Button)
+        local isGui = child:IsA("GuiObject")
+        local isText = child:IsA("TextLabel") or child:IsA("TextButton")
+        
+        if isGui then
+            -- Если мы еще не запомнили прозрачность этого объекта — запоминаем её
+            if originalTrans[child] == nil then
+                originalTrans[child] = {
+                    bg = child.BackgroundTransparency,
+                    txt = isText and child.TextTransparency or 0
+                }
+            end
+            
+            -- Возвращаем к оригиналу или уводим в 1
+            local targetBg = menuVisible and originalTrans[child].bg or 1
+            TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = targetBg}):Play()
+            
+            if isText then
+                local targetTxt = menuVisible and originalTrans[child].txt or 1
+                TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = targetTxt}):Play()
+            end
+        end
+    end
+
+    if menuVisible then mainFrame.Visible = true end
+    task.delay(0.3, function()
+        if not menuVisible then mainFrame.Visible = false end
+    end)
+end)
+
 local container = Instance.new("Frame", mainFrame)
 container.Size, container.Position, container.BackgroundTransparency = UDim2.new(1, -120, 1, -20), UDim2.new(0, 110, 0, 10), 1
 

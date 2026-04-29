@@ -4,10 +4,8 @@ local RunService = game:GetService("RunService")
 local player = game.Players.LocalPlayer
 local pGui = player:WaitForChild("PlayerGui")
 
--- [ УДАЛЕНИЕ СТАРОЙ ВЕРСИИ ]
 if pGui:FindFirstChild("QuestHubSystem") then pGui.QuestHubSystem:Destroy() end
 
--- [ НАСТРОЙКИ ГРАФИКИ И ЦВЕТОВ ]
 local COLORS = {
     MainBG = Color3.fromRGB(15, 15, 18),
     Text = Color3.fromRGB(255, 255, 255),
@@ -17,10 +15,9 @@ local COLORS = {
     Transparency = 0.15
 }
 
--- [ СОЗДАНИЕ КОНТЕЙНЕРА ]
 local screen = Instance.new("ScreenGui", pGui)
 screen.Name = "QuestHubSystem"
-screen.ResetOnSpawn = false -- Не пропадает при смерти
+screen.ResetOnSpawn = false
 
 local function makeDraggable(frame)
     local UserInputService = game:GetService("UserInputService")
@@ -28,17 +25,15 @@ local function makeDraggable(frame)
 
     local dragging = false
     local dragStart, startPos
-    local targetPos = frame.Position -- Целевая позиция, к которой будем стремиться
-    local dragSpeed = 0.15 -- Скорость доводки (от 0.1 до 1). Чем меньше, тем плавнее.
+    local targetPos = frame.Position
+    local dragSpeed = 0.15
 
-    -- Когда нажали на фрейм
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
             
-            -- Отключаем перетаскивание при отпускании
             local connection
             connection = UserInputService.InputEnded:Connect(function(inputEnded)
                 if inputEnded == input or inputEnded.UserInputType == Enum.UserInputType.MouseButton1 or inputEnded.UserInputType == Enum.UserInputType.Touch then
@@ -49,7 +44,6 @@ local function makeDraggable(frame)
         end
     end)
 
-    -- Обновляем целевую позицию при движении
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
@@ -62,16 +56,13 @@ local function makeDraggable(frame)
         end
     end)
 
-    -- Каждый кадр плавно двигаем рамку к цели
     RunService.RenderStepped:Connect(function()
         if frame.Position ~= targetPos then
-            -- Метод Lerp делает переход между текущей позицией и целью мягким
             frame.Position = frame.Position:Lerp(targetPos, dragSpeed)
         end
     end)
 end
 
--- [ ФУНКЦИЯ СОЗДАНИЯ КНОПКИ С ПОДСКАЗКОЙ ]
 local function addButton(parent, text, hint, color, callback)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, -5, 0, 45)
@@ -96,11 +87,9 @@ local function addButton(parent, text, hint, color, callback)
     btn.MouseButton1Click:Connect(callback)
     btn.MouseEnter:Connect(function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.8}):Play() end)
     btn.MouseLeave:Connect(function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = color and 0.85 or 0.95}):Play() end)
-    -- Вставь это в конец функции addButton:
     parent.CanvasSize = UDim2.new(0, 0, 0, parent.UIListLayout.AbsoluteContentSize.Y + 10)
 end
 
--- [ ФУНКЦИЯ СОЗДАНИЯ ОКНА ]
 local function createStyledFrame(size, pos, titleText)
     local frame = Instance.new("Frame", screen)
     frame.Size, frame.Position = size, pos
@@ -115,13 +104,11 @@ local function createStyledFrame(size, pos, titleText)
     return frame
 end
 
--- [ ГЛАВНОЕ ОКНО ]
 local mainFrame = createStyledFrame(UDim2.new(0, 350, 0, 250), UDim2.new(0.5, -175, 0.5, -125), "The 3 Veggiteers")
 local sideBar = Instance.new("Frame", mainFrame)
 sideBar.Size, sideBar.Position, sideBar.BackgroundTransparency = UDim2.new(0, 90, 1, -20), UDim2.new(0, 10, 0, 10), 1
 Instance.new("UIListLayout", sideBar).Padding = UDim.new(0, 8)
 
--- [ СОЗДАНИЕ КНОПКИ ПЕРЕКЛЮЧЕНИЯ ]
 local toggleBtn = Instance.new("TextButton", screen)
 toggleBtn.Name = "MenuToggle"
 toggleBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -137,35 +124,29 @@ toggleBtn.ZIndex = 10
 local btnCorner = Instance.new("UICorner", toggleBtn)
 btnCorner.CornerRadius = UDim.new(0, 12)
 
--- ДОБАВЛЯЕМ ОБВОДКУ
 local stroke = Instance.new("UIStroke", toggleBtn)
 stroke.Thickness = 2 -- Толщина линии
 stroke.Color = Color3.fromRGB(255, 255, 255) -- Цвет обводки (белый)
-stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- Обводка по краям
-stroke.Transparency = 0.2 -- Сделаем её чуть полупрозрачной для стиля
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Transparency = 0.2
 
 makeDraggable(toggleBtn)
 
--- ЛОГИКА СКРЫТИЯ (С СОХРАНЕНИЕМ ПРОЗРАЧНОСТИ)
 local menuVisible = true
-local originalTrans = {} -- Таблица для хранения "родной" прозрачности
+local originalTrans = {}
 
 toggleBtn.MouseButton1Click:Connect(function()
     menuVisible = not menuVisible
     
-    -- 1. Анимация главной рамки
     TweenService:Create(mainFrame, TweenInfo.new(0.3), {
         BackgroundTransparency = menuVisible and 0.15 or 1
     }):Play()
     
-    -- 2. Анимация всех внутренних элементов
     for _, child in pairs(mainFrame:GetDescendants()) do
-        -- Работаем с фоном (Frame, Button) и текстом (Label, Button)
         local isGui = child:IsA("GuiObject")
         local isText = child:IsA("TextLabel") or child:IsA("TextButton")
         
         if isGui then
-            -- Если мы еще не запомнили прозрачность этого объекта — запоминаем её
             if originalTrans[child] == nil then
                 originalTrans[child] = {
                     bg = child.BackgroundTransparency,
@@ -173,7 +154,6 @@ toggleBtn.MouseButton1Click:Connect(function()
                 }
             end
             
-            -- Возвращаем к оригиналу или уводим в 1
             local targetBg = menuVisible and originalTrans[child].bg or 1
             TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = targetBg}):Play()
             
@@ -193,7 +173,6 @@ end)
 local container = Instance.new("Frame", mainFrame)
 container.Size, container.Position, container.BackgroundTransparency = UDim2.new(1, -120, 1, -20), UDim2.new(0, 110, 0, 10), 1
 
--- [ СИСТЕМА ТАБОВ ]
 local pages = {}
 local function createTab(name, isDefault)
     local tabBtn = Instance.new("TextButton", sideBar)
@@ -221,20 +200,16 @@ local function createTab(name, isDefault)
     return page
 end
 
--- [ СОЗДАНИЕ ПОД-ОКОН ]
 local function createSubWindow(title)
     local win = createStyledFrame(UDim2.new(0, 220, 0, 180), UDim2.new(0.5, 200, 0.5, -90), title)
     win.Visible = false
     local close = Instance.new("TextButton", win)
-    -- Увеличиваем Size (было 20х20, стало 30х30)
     close.Size = UDim2.new(0, 30, 0, 30) 
-    -- Сдвигаем чуть левее, чтобы не вылезала за края (было -25, стало -35)
     close.Position = UDim2.new(1, -35, 0, 5)
     close.Text = "x"
     close.TextColor3 = Color3.new(1, 0, 0)
     close.BackgroundTransparency = 1
     close.Font = Enum.Font.GothamBold
-    -- Увеличиваем TextSize (было 12-14, стало 22)
     close.TextSize = 15 
     
     close.MouseButton1Click:Connect(function() win.Visible = false end)
@@ -245,7 +220,6 @@ local function createSubWindow(title)
     return win, content
 end
 
--- [ ИНИЦИАЛИЗАЦИЯ СОДЕРЖИМОГО ]
 local TabMain = createTab("Main", true)
 local TabSettings = createTab("Settings", false)
 local TabCredits = createTab("Credits", false)
@@ -254,12 +228,10 @@ local win1, cont1 = createSubWindow("Chloe - carrot")
 local win2, cont2 = createSubWindow("Olivia - onion")
 local win3, cont3 = createSubWindow("Brooke - reddish")
 
--- [ КНОПКИ В ВКЛАДКЕ MAIN ]
 addButton(TabMain, "Chloe - carrot", "Map - School, Gamemode - Tag", Color3.fromRGB(255, 117, 24), function() win1.Visible = not win1.Visible end)
 addButton(TabMain, "Olivia - onion", "Map - Hospital, Carnival; Gamemode - Any ,Traitor", Color3.fromRGB(240, 230, 210), function() win2.Visible = not win2.Visible end)
 addButton(TabMain, "Brooke - reddish", "Map - Gallery, Gamemode - Swarm", Color3.fromRGB(227, 38, 75), function() win3.Visible = not win3.Visible end)
 
--- [ КНОПКИ ВНУТРИ ПОД-ОКОН ]
 addButton(cont1, "Redeem Code", "Won't work if you are not player", nil, function()
 fireclickdetector(workspace.LoadedMap.Part1.Lock.ClickDetector)
 wait(0.1)
@@ -496,10 +468,8 @@ for _, v in pairs(workspace:GetDescendants()) do
 end
 end)
 
--- [ НАСТРОЙКИ ]
 addButton(TabSettings, "Destroy UI", "Fully deletes UI", Color3.fromRGB(150, 50, 50), function() screen:Destroy() end)
 
--- [ КРЕДИТЫ ]
 addButton(TabCredits, "Totallynothimplayz", "yes", nil, function() end)
 addButton(TabCredits, "Sh@d0w", "Sigma op script", nil, function() end)
 addButton(TabCredits, "Version 6.7", "Cool", nil, function() end)

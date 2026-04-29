@@ -185,31 +185,31 @@ game:GetService("ReplicatedStorage").Remotes.ChapterEvent:FireServer("_VGC", tos
 end)
 addButton(cont2, "Get Key - Hospital", "Gets Key and Escapes with him", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Plank", true).CFrame
-wait(1)
+wait(0.25)
 fireclickdetector(game.Workspace:FindFirstChild("Plank", true):FindFirstChildOfClass("ClickDetector"))
 wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("Plank").Parent = game.Players.LocalPlayer.Character
 wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(29, 4, -274)
-wait(1)
+wait(0.5)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Hammer", true).CFrame
-wait(1)
+wait(0.25)
 fireclickdetector(game.Workspace:FindFirstChild("Hammer", true):FindFirstChildOfClass("ClickDetector"))
 wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("Hammer").Parent = game.Players.LocalPlayer.Character
 wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12, 15, -277)
-wait(1)
+wait(0.5)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("WhiteKey", true).CFrame
-wait(1)
+wait(0.25)
 fireclickdetector(game.Workspace:FindFirstChild("WhiteKey", true):FindFirstChildOfClass("ClickDetector"))
 wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("WhiteKey").Parent = game.Players.LocalPlayer.Character
 wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-12, 15, -277)
-wait(1)
+wait(0.5)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.LoadedMap.Part1.Table.Table.Union.CFrame
-wait(1)
+wait(0.25)
 
 fireproximityprompt(workspace.LoadedMap.Part1.Table.Drawer.MainPart.Attachment.ProximityPrompt)
 wait(1)
@@ -224,7 +224,7 @@ game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-9, 15, 
 end)
 addButton(cont2, "Redeem Code - Carnival", "Redeems APPLEPIE code", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-460, 80, 302)
-wait(1)
+wait(0.25)
 fireclickdetector(workspace.LoadedMap.Part1.Lock.ClickDetector)
 wait(1)
 fireproximityprompt(workspace.LoadedMap.Part1:GetChildren()[338].PowerPanel.Panel.Attachment.ProximityPrompt)
@@ -261,7 +261,7 @@ if enter then task.wait() click(enter) end
 end)
 addButton(cont2, "Auto Memory Match", "Close Memory Match menu for work", nil, function()
 fireproximityprompt(workspace.LoadedMap.Part1:GetChildren()[338].PowerPanel.Panel.Attachment.ProximityPrompt)
-wait(0.2)
+wait(0.25)
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
@@ -355,13 +355,13 @@ end)
 end)
 addButton(cont2, "Deliver Potato Plush", "Gets and delivers Potato Plush", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("WaterGun", true).CFrame
-wait(1)
+wait(0.25)
 fireclickdetector(game.Workspace:FindFirstChild("WaterGun", true):FindFirstChildOfClass("ClickDetector"))
 wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("WaterGun").Parent = game.Players.LocalPlayer.Character
 wait(1)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-515, 75, 324)
-wait(1)
+wait(0.5)
 fireclickdetector(game.Workspace:FindFirstChild("PotatoPlush", true):FindFirstChildOfClass("ClickDetector"))
 wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("PotatoPlush").Parent = game.Players.LocalPlayer.Character
@@ -371,12 +371,14 @@ for i = 1,10 do
     wait(0.03)
 end
 end)
-addButton(cont3, "Complete Gallery part", "Collects all hidden items", nil, function()
+addButton(cont3, "Get Hammer", "Gets and Equips Hammer", nil, function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace:FindFirstChild("Hammer", true).CFrame
-wait(1)
+wait(0.25)
 fireclickdetector(game.Workspace:FindFirstChild("Hammer", true):FindFirstChildOfClass("ClickDetector"))
 wait(1)
 game.Players.LocalPlayer.Backpack:FindFirstChild("Hammer").Parent = game.Players.LocalPlayer.Character
+end)
+addButton(cont3, "Break all Paintings", "Hammer need to be Equipped", nil, function()
 for _, m in pairs(workspace:GetDescendants()) do
     local p = m:GetChildren()
     local c = false
@@ -389,7 +391,8 @@ for _, m in pairs(workspace:GetDescendants()) do
         task.wait(0.3)
     end
 end
-
+end)
+addButton(cont3, "Collect Hidden items", "Collects Hidden items", nil, function()
 for _, v in pairs(workspace:GetDescendants()) do
     if v.Name == "Remote" or v.Name == "Battery" then
         local cd = v:FindFirstChildOfClass("ClickDetector") or v:FindFirstChildWhichIsA("ClickDetector", true)
@@ -397,7 +400,7 @@ for _, v in pairs(workspace:GetDescendants()) do
             game.Players.LocalPlayer.Character:PivotTo(v:GetPivot())
             task.wait(0.2)
             fireclickdetector(cd)
-            task.wait(0.3)
+            task.wait(0.5)
         end
     end
 end

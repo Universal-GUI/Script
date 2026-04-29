@@ -28,44 +28,49 @@ local function makeDraggable(frame)
 
     local dragging = false
     local dragStart, startPos
-    local targetPos = frame.Position -- Целевая позиция, к которой будем стремиться
-    local dragSpeed = 0.2 -- Скорость доводки (от 0.1 до 1). Чем меньше, тем плавнее.
+    local targetPos = frame.Position
+    local dragSpeed = 0.15 -- Плавность (чем меньше, тем мягче)
+    
+    local dragTouchObject = nil -- Для фиксации конкретного пальца
 
-    -- Когда нажали на фрейм
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
+            dragTouchObject = input -- Запоминаем ввод
             
-            -- Отключаем перетаскивание при отпускании
+            -- Слушаем окончание ввода именно для этого пальца/мыши
             local connection
-            connection = UserInputService.InputEnded:Connect(function(inputEnded)
-                if inputEnded == input or inputEnded.UserInputType == Enum.UserInputType.MouseButton1 or inputEnded.UserInputType == Enum.UserInputType.Touch then
+            connection = UserInputService.InputEnded:Connect(function(endedInput)
+                if endedInput == dragTouchObject or endedInput.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = false
+                    dragTouchObject = nil
                     connection:Disconnect()
                 end
             end)
         end
     end)
 
-    -- Обновляем целевую позицию при движении
+    -- Отслеживаем перемещение глобально
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            targetPos = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X, 
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
+        if dragging then
+            -- Если это мышь или ТОТ ЖЕ палец, который начал движение
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input == dragTouchObject then
+                local delta = input.Position - dragStart
+                targetPos = UDim2.new(
+                    startPos.X.Scale, 
+                    startPos.X.Offset + delta.X, 
+                    startPos.Y.Scale, 
+                    startPos.Y.Offset + delta.Y
+                )
+            end
         end
     end)
 
-    -- Каждый кадр плавно двигаем рамку к цели
+    -- Постоянное плавное обновление позиции
     RunService.RenderStepped:Connect(function()
         if frame.Position ~= targetPos then
-            -- Метод Lerp делает переход между текущей позицией и целью мягким
             frame.Position = frame.Position:Lerp(targetPos, dragSpeed)
         end
     end)
